@@ -124,6 +124,42 @@ LOG_LEVEL="INFO"
 
 ---
 
+## Running Tests
+
+Tests are written with **pytest** and use an isolated in-memory SQLite database — no `.env` configuration is required.
+
+### Install test dependencies
+
+`pytest` is the only additional dependency. Install it into the active virtual environment:
+
+```bash
+pip install pytest
+```
+
+### Run the full test suite
+
+```bash
+python -m pytest tests/
+```
+
+### Run with verbose output
+
+```bash
+python -m pytest tests/ -v
+```
+
+### Test structure
+
+```
+tests/
+├── conftest.py        # Fixtures: in-memory DB, session, TestClient, dependency override
+├── test_schemas.py    # Pydantic validation — coordinates, field lengths, optional fields
+├── test_services.py   # Service layer — CRUD operations and geospatial distance filtering
+└── test_routes.py     # HTTP layer — status codes, request/response bodies, edge cases
+```
+
+---
+
 ## Running the Application
 
 ```bash
