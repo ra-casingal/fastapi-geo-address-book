@@ -14,11 +14,11 @@ from app.core.config import settings
 # from raising an error when the same connection is used across threads.
 # SQLAlchemy's session-per-request pattern makes this safe.
 _connect_args: dict[str, bool] = (
-    {"check_same_thread": False} if settings.DATABASE_URL.startswith("sqlite") else {}
+    {"check_same_thread": False} if settings.database_url.startswith("sqlite") else {}
 )
 
 engine: Engine = create_engine(
-    settings.DATABASE_URL,
+    settings.database_url,
     connect_args=_connect_args,
 )
 

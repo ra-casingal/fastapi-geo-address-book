@@ -18,7 +18,7 @@ from app.db.session import engine
 import app.models  # noqa: F401 — registers all ORM models with Base.metadata
 
 # Logging must be configured before any module emits records.
-setup_logging(settings.LOG_LEVEL)
+setup_logging(settings.log_level)
 
 logger = logging.getLogger(__name__)
 
@@ -29,8 +29,8 @@ Base.metadata.create_all(bind=engine)
 logger.info("Database tables verified / created.")
 
 app = FastAPI(
-    title=settings.PROJECT_NAME,
-    version=settings.VERSION,
+    title=settings.project_name,
+    version=settings.version,
     description="A geo-aware address book API",
 )
 
@@ -38,9 +38,9 @@ app.include_router(address_router, prefix="/api/v1")
 
 logger.info(
     "Application '%s' v%s starting up (log level: %s).",
-    settings.PROJECT_NAME,
-    settings.VERSION,
-    settings.LOG_LEVEL,
+    settings.project_name,
+    settings.version,
+    settings.log_level,
 )
 
 
