@@ -20,6 +20,7 @@ Typical usage from a route handler::
 
 from typing import Optional
 
+from geopy.distance import geodesic
 from sqlalchemy.orm import Session
 
 from app.models.address import Address
@@ -122,3 +123,40 @@ def delete_address(db: Session, address_id: int) -> bool:
     db.delete(db_address)
     db.commit()
     return True
+
+
+def get_addresses_within_distance(
+    db: Session,
+    latitude: float,
+    longitude: float,
+    radius_km: float,
+) -> list[Address]:
+    """Return all addresses within a given radius of a reference point.
+
+    Fetches every address from the database and filters in Python using the
+    Vincenty/geodesic formula provided by geopy.  This is appropriate for
+    SQLite, which has no native geospatial indexing.
+
+    Args:
+        db: Active database session.
+        latitude: Reference point latitude in decimal degrees.
+        longitude: Reference point longitude in decimal degrees.
+        radius_km: Search radius in kilometres (inclusive).
+
+    Returns:
+        All ``Address`` records whose geodesic distance from the reference
+        point is less than or equal to ``radius_km``.
+    """
+    origin = (latitude, longitude)
+
+    # Load all addresses; geospatial filtering happens in-process.
+    all_addresses = db.query(Address).all()
+
+    results: list[Address] = []
+    for address in all_addresses:
+        target = (address.latitude, address.longitude)
+        distance_km = geodesic(origin, target).km
+        if distance_km <= radius_km:
+            results.append(address)
+
+    return results
