@@ -51,7 +51,14 @@ def create_address(body: AddressCreate, db: DB) -> AddressResponse:
         The newly created address, including its generated ``id`` and timestamps.
     """
     logger.info("Creating address: lat=%s lon=%s name=%r", body.latitude, body.longitude, body.name)
-    address = address_service.create_address(db, body)
+    try:
+        address = address_service.create_address(db, body)
+    except Exception:
+        logger.error("Unexpected error creating address.", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Internal server error.",
+        )
     logger.info("Address created successfully: id=%d", address.id)
     return address
 
@@ -73,7 +80,14 @@ def list_addresses(
         A list of address records (may be empty).
     """
     logger.info("Listing addresses: skip=%d limit=%d", skip, limit)
-    return address_service.get_addresses(db, skip=skip, limit=limit)
+    try:
+        return address_service.get_addresses(db, skip=skip, limit=limit)
+    except Exception:
+        logger.error("Unexpected error listing addresses.", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Internal server error.",
+        )
 
 
 # NOTE: /nearby MUST be declared before /{address_id}.
@@ -99,9 +113,16 @@ def get_nearby_addresses(
         less than or equal to ``radius_km``.
     """
     logger.info("Nearby search: lat=%s lon=%s radius_km=%s", latitude, longitude, radius_km)
-    results = address_service.get_addresses_within_distance(
-        db, latitude=latitude, longitude=longitude, radius_km=radius_km
-    )
+    try:
+        results = address_service.get_addresses_within_distance(
+            db, latitude=latitude, longitude=longitude, radius_km=radius_km
+        )
+    except Exception:
+        logger.error("Unexpected error during nearby search.", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Internal server error.",
+        )
     logger.info("Nearby search returned %d result(s).", len(results))
     return results
 
@@ -121,7 +142,14 @@ def get_address(address_id: int, db: DB) -> AddressResponse:
         HTTPException: 404 if no address with ``address_id`` exists.
     """
     logger.info("Fetching address id=%d", address_id)
-    address = address_service.get_address(db, address_id)
+    try:
+        address = address_service.get_address(db, address_id)
+    except Exception:
+        logger.error("Unexpected error fetching address id=%d.", address_id, exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Internal server error.",
+        )
     if address is None:
         logger.warning("Address id=%d not found.", address_id)
         raise HTTPException(
@@ -150,7 +178,14 @@ def update_address(address_id: int, body: AddressUpdate, db: DB) -> AddressRespo
         HTTPException: 404 if no address with ``address_id`` exists.
     """
     logger.info("Updating address id=%d with fields: %s", address_id, body.model_dump(exclude_unset=True))
-    address = address_service.update_address(db, address_id, body)
+    try:
+        address = address_service.update_address(db, address_id, body)
+    except Exception:
+        logger.error("Unexpected error updating address id=%d.", address_id, exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Internal server error.",
+        )
     if address is None:
         logger.warning("Update failed — address id=%d not found.", address_id)
         raise HTTPException(
@@ -176,7 +211,14 @@ def delete_address(address_id: int, db: DB) -> dict[str, str]:
         HTTPException: 404 if no address with ``address_id`` exists.
     """
     logger.info("Deleting address id=%d", address_id)
-    deleted = address_service.delete_address(db, address_id)
+    try:
+        deleted = address_service.delete_address(db, address_id)
+    except Exception:
+        logger.error("Unexpected error deleting address id=%d.", address_id, exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Internal server error.",
+        )
     if not deleted:
         logger.warning("Delete failed — address id=%d not found.", address_id)
         raise HTTPException(

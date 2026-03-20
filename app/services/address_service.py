@@ -22,6 +22,7 @@ import logging
 from typing import Optional
 
 from geopy.distance import geodesic
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
 from app.models.address import Address
@@ -42,8 +43,13 @@ def create_address(db: Session, address_in: AddressCreate) -> Address:
     """
     db_address = Address(**address_in.model_dump())
     db.add(db_address)
-    db.commit()
-    db.refresh(db_address)
+    try:
+        db.commit()
+        db.refresh(db_address)
+    except SQLAlchemyError:
+        db.rollback()
+        logger.error("Failed to persist new address; transaction rolled back.", exc_info=True)
+        raise
     logger.info("Address id=%d persisted to database.", db_address.id)
     return db_address
 
@@ -106,8 +112,13 @@ def update_address(
     for field, value in changes.items():
         setattr(db_address, field, value)
 
-    db.commit()
-    db.refresh(db_address)
+    try:
+        db.commit()
+        db.refresh(db_address)
+    except SQLAlchemyError:
+        db.rollback()
+        logger.error("Failed to update address id=%d; transaction rolled back.", address_id, exc_info=True)
+        raise
     logger.info("Address id=%d updated with fields: %s", address_id, list(changes.keys()))
     return db_address
 
@@ -127,8 +138,13 @@ def delete_address(db: Session, address_id: int) -> bool:
         logger.warning("Delete requested for non-existent address id=%d.", address_id)
         return False
 
-    db.delete(db_address)
-    db.commit()
+    try:
+        db.delete(db_address)
+        db.commit()
+    except SQLAlchemyError:
+        db.rollback()
+        logger.error("Failed to delete address id=%d; transaction rolled back.", address_id, exc_info=True)
+        raise
     logger.info("Address id=%d deleted from database.", address_id)
     return True
 
