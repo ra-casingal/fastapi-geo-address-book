@@ -9,10 +9,11 @@ from fastapi import FastAPI
 from app.core.config import settings
 from app.db.base import Base
 from app.db.session import engine
+import app.models  # noqa: F401 — registers all ORM models with Base.metadata
 
 # Create all tables on startup (no-op if they already exist).
-# Import every model module before this line so that Base.metadata is fully
-# populated.  Models added under app/models/ are auto-discovered here.
+# app.models must be imported above before this call so every table
+# is present in Base.metadata.
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
