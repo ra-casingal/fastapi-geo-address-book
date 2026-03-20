@@ -1,0 +1,48 @@
+# Virtual environments
+venv/
+.venv/
+env/
+ENV/
+
+# Python cache
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.pyc
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# SQLite database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Environment variables
+.env
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Pytest / coverage
+.pytest_cache/
+.coverage
+htmlcov/
+coverage.xml
+
+# Mypy
+.mypy_cache/
+
+# Logs
+*.log
