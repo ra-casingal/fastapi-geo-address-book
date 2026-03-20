@@ -1,58 +1,92 @@
 # Address Book API
 
-A geo-aware RESTful address book built with **FastAPI**, **SQLAlchemy**, and **SQLite**. Designed as a clean, minimal, production-ready Python microservice.
+A RESTful API for managing a geo-aware address book. Supports full CRUD operations on addresses and location-based search to find all addresses within a given radius. Built with **FastAPI**, **SQLAlchemy**, **Pydantic v2**, and **geopy**.
 
 ---
 
 ## Features
 
-- **FastAPI** — high-performance ASGI framework with automatic OpenAPI docs
-- **SQLAlchemy 2.x ORM** — type-safe database access with a declarative model layer
-- **SQLite** (default) — zero-config local database; swappable for PostgreSQL or MySQL via `DATABASE_URL`
-- **Pydantic v2 + pydantic-settings** — validated settings loaded from environment variables
-- **geopy** — geospatial distance calculations between addresses
-- **python-dotenv** — `.env` file support for local development
+- Create, read, update, and delete addresses
+- Find addresses within a given radius using geodesic distance (geopy)
+- Input validation with Pydantic v2 (coordinate range constraints)
+- SQLite database via SQLAlchemy 2.x ORM
+- Configuration fully driven by environment variables via pydantic-settings
+- Structured logging and consistent error handling throughout
 
 ---
 
-## Requirements
+## Project Structure
 
-- Python **3.10+** (tested on 3.14)
-- `pip` or any PEP 517-compatible package manager
+```
+fastapi-geo-address-book/
+├── app/
+│   ├── main.py                    # App factory, startup, global exception handlers
+│   ├── api/
+│   │   └── routes/
+│   │       └── address.py         # All address endpoints (APIRouter)
+│   ├── models/
+│   │   └── address.py             # SQLAlchemy ORM model
+│   ├── schemas/
+│   │   └── address.py             # Pydantic request/response schemas
+│   ├── services/
+│   │   └── address_service.py     # CRUD + geospatial business logic
+│   ├── db/
+│   │   ├── base.py                # Declarative Base
+│   │   ├── session.py             # Engine + SessionLocal factory
+│   │   └── deps.py                # get_db() FastAPI dependency
+│   └── core/
+│       ├── config.py              # Settings (pydantic-settings)
+│       └── logger.py              # Logging configuration
+├── .env                           # Local environment variables (git-ignored)
+├── .env.example                   # Template — safe to commit
+├── requirements.txt
+└── README.md
+```
 
 ---
 
-## Quick Start
+## Setup Instructions
 
 ### 1. Clone the repository
 
 ```bash
-git clone https://github.com/your-username/fastapi-geo-address-book.git
+git clone https://github.com/ra-casingal/fastapi-geo-address-book.git
 cd fastapi-geo-address-book
 ```
 
-### 2. Create and activate a virtual environment
+### 2. Create a virtual environment
 
 ```bash
-# Windows (PowerShell)
-py -3.14 -m venv venv
-.\venv\Scripts\Activate.ps1
+# Windows
+py -3 -m venv venv
 
 # macOS / Linux
 python3 -m venv venv
+```
+
+### 3. Activate the virtual environment
+
+```bash
+# Windows (PowerShell)
+.\venv\Scripts\Activate.ps1
+
+# Windows (Command Prompt)
+.\venv\Scripts\activate.bat
+
+# macOS / Linux
 source venv/bin/activate
 ```
 
-> **Windows note:** if script execution is blocked, run once:
+> **Windows note:** if PowerShell blocks script execution, run once:
 > `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned`
 
-### 3. Install dependencies
+### 4. Install dependencies
 
 ```bash
 pip install -r requirements.txt
 ```
 
-### 4. Configure environment variables
+### 5. Create the `.env` file
 
 ```bash
 # Windows
@@ -62,112 +96,108 @@ copy .env.example .env
 cp .env.example .env
 ```
 
-Edit `.env` if you need to change the database URL or any other setting. See [Environment Variables](#environment-variables) below for the full reference.
-
-### 5. Run the development server
+### 6. Run the server
 
 ```bash
 uvicorn app.main:app --reload
 ```
 
-The API will be available at:
-
-| URL | Description |
-|-----|-------------|
-| `http://127.0.0.1:8000` | Root health-check endpoint |
-| `http://127.0.0.1:8000/docs` | Interactive Swagger UI |
-| `http://127.0.0.1:8000/redoc` | ReDoc documentation |
-
 ---
 
 ## Environment Variables
 
-All variables are read from `.env` in the project root (copy from `.env.example`).
-
-| Variable | Required | Default | Description |
-|---|---|---|---|
-| `PROJECT_NAME` | No | `"Address Book API"` | Name shown in the OpenAPI `/docs` UI |
-| `VERSION` | No | `"0.1.0"` | Semantic version returned by `GET /` |
-| `DATABASE_URL` | No | `sqlite:///./address_book.db` | SQLAlchemy connection string (see examples below) |
-
-### `DATABASE_URL` examples
+All configuration is loaded from `.env` (copy from `.env.example`). No values are hardcoded in source code.
 
 ```dotenv
-# SQLite — default, no extra dependencies needed
+PROJECT_NAME="Address Book API"
+VERSION="0.1.0"
 DATABASE_URL="sqlite:///./address_book.db"
-
-# PostgreSQL — install psycopg2-binary first
-DATABASE_URL="postgresql+psycopg2://user:password@localhost:5432/address_book"
-
-# MySQL / MariaDB — install PyMySQL first
-DATABASE_URL="mysql+pymysql://user:password@localhost:3306/address_book"
+LOG_LEVEL="INFO"
 ```
+
+| Variable       | Default                       | Description                                    |
+|----------------|-------------------------------|------------------------------------------------|
+| `PROJECT_NAME` | `Address Book API`            | Name displayed in the OpenAPI docs UI          |
+| `VERSION`      | `0.1.0`                       | API version string                             |
+| `DATABASE_URL` | `sqlite:///./address_book.db` | SQLAlchemy connection string                   |
+| `LOG_LEVEL`    | `INFO`                        | Logging verbosity: DEBUG, INFO, WARNING, ERROR |
 
 ---
 
-## Project Structure
-
-```
-fastapi-geo-address-book/
-├── app/
-│   ├── main.py              # FastAPI app factory, startup hooks, root route
-│   │
-│   ├── api/                 # Route modules (APIRouter instances)
-│   │   └── __init__.py
-│   │
-│   ├── models/              # SQLAlchemy ORM model classes (inherit from Base)
-│   │   └── __init__.py
-│   │
-│   ├── schemas/             # Pydantic request/response schemas
-│   │   └── __init__.py
-│   │
-│   ├── services/            # Business logic (e.g. geopy distance calculations)
-│   │   └── __init__.py
-│   │
-│   ├── db/
-│   │   ├── base.py          # Declarative Base — all models register here
-│   │   ├── session.py       # Engine + SessionLocal factory
-│   │   └── deps.py          # get_db() FastAPI dependency
-│   │
-│   └── core/
-│       └── config.py        # Pydantic-settings Settings class
-│
-├── .env                     # Local secrets (git-ignored)
-├── .env.example             # Template — commit this, not .env
-├── .gitignore
-└── requirements.txt
-```
-
-### Layer responsibilities
-
-| Directory | Responsibility |
-|---|---|
-| `api/` | HTTP layer — declare routes, validate HTTP concerns, call services |
-| `models/` | Database layer — ORM table definitions |
-| `schemas/` | Contract layer — Pydantic models for request bodies and responses |
-| `services/` | Business layer — logic that is independent of HTTP and database details |
-| `db/` | Infrastructure layer — engine, session lifecycle, DI wiring |
-| `core/` | Cross-cutting — settings, shared constants |
-
----
-
-## Running in Production
-
-Replace `--reload` (development-only) with explicit worker configuration:
+## Running the Application
 
 ```bash
-uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 4
+uvicorn app.main:app --reload
 ```
 
-Or use **Gunicorn** with the Uvicorn worker class:
-
-```bash
-pip install gunicorn
-gunicorn app.main:app -k uvicorn.workers.UvicornWorker --workers 4 --bind 0.0.0.0:8000
-```
+| URL                           | Description            |
+|-------------------------------|------------------------|
+| `http://127.0.0.1:8000/docs`  | Interactive Swagger UI |
+| `http://127.0.0.1:8000/redoc` | ReDoc documentation    |
 
 ---
 
-## License
+## API Endpoints
 
-MIT
+All endpoints are prefixed with `/api/v1`.
+
+| Method   | Endpoint            | Description                                 |
+|----------|---------------------|---------------------------------------------|
+| `POST`   | `/addresses`        | Create a new address                        |
+| `GET`    | `/addresses`        | List all addresses (supports pagination)    |
+| `GET`    | `/addresses/{id}`   | Retrieve a single address by ID             |
+| `PUT`    | `/addresses/{id}`   | Update an existing address (partial update) |
+| `DELETE` | `/addresses/{id}`   | Delete an address by ID                     |
+| `GET`    | `/addresses/nearby` | Find addresses within a given radius (km)   |
+
+### Query parameters
+
+**`GET /api/v1/addresses`**
+- `skip` (int, default `0`) — number of records to skip
+- `limit` (int, default `100`) — maximum records to return
+
+**`GET /api/v1/addresses/nearby`**
+- `latitude` (float, required) — origin latitude in decimal degrees
+- `longitude` (float, required) — origin longitude in decimal degrees
+- `radius_km` (float, required) — search radius in kilometres
+
+---
+
+## Example Requests
+
+### Create an address
+
+```bash
+curl -X POST http://127.0.0.1:8000/api/v1/addresses \
+  -H "Content-Type: application/json" \
+  -d '{"latitude": 51.5074, "longitude": -0.1278, "name": "London"}'
+```
+
+```json
+{
+  "id": 1,
+  "name": "London",
+  "latitude": 51.5074,
+  "longitude": -0.1278,
+  "created_at": "2026-03-20T10:00:00",
+  "updated_at": "2026-03-20T10:00:00"
+}
+```
+
+### Find nearby addresses
+
+```bash
+curl "http://127.0.0.1:8000/api/v1/addresses/nearby?latitude=51.5074&longitude=-0.1278&radius_km=500"
+```
+
+Returns all addresses stored within 500 km of the given coordinates.
+
+---
+
+## Notes & Assumptions
+
+- **SQLite** is used as the database for simplicity and zero-config local setup. The `DATABASE_URL` environment variable can be changed to PostgreSQL or MySQL without any code changes.
+- **No authentication** is implemented — this is intentional for assessment scope.
+- **Swagger UI** (`/docs`) serves as the interactive API client; no separate GUI is required.
+- **Geospatial distance** is calculated using `geopy.distance.geodesic`, which uses the WGS-84 ellipsoid for accuracy. Filtering is performed in application memory, which is appropriate for SQLite at assessment scale.
+- Coordinates are validated at the schema level: latitude must be in `[-90, 90]` and longitude in `[-180, 180]`.
