@@ -22,6 +22,9 @@ class Settings(BaseSettings):
     PROJECT_NAME: str = "Address Book API"
     VERSION: str = "0.1.0"
     DATABASE_URL: str = "sqlite:///./address_book.db"
+    #: Controls verbosity for the entire application.  Accepted values:
+    #: DEBUG, INFO, WARNING, ERROR, CRITICAL (case-insensitive).
+    LOG_LEVEL: str = "INFO"
 
     class Config:
         env_file = ".env"

@@ -50,8 +50,9 @@ def create_address(body: AddressCreate, db: DB) -> AddressResponse:
     Returns:
         The newly created address, including its generated ``id`` and timestamps.
     """
+    logger.info("Creating address: lat=%s lon=%s name=%r", body.latitude, body.longitude, body.name)
     address = address_service.create_address(db, body)
-    logger.info("Created address id=%d", address.id)
+    logger.info("Address created successfully: id=%d", address.id)
     return address
 
 
@@ -71,6 +72,7 @@ def list_addresses(
     Returns:
         A list of address records (may be empty).
     """
+    logger.info("Listing addresses: skip=%d limit=%d", skip, limit)
     return address_service.get_addresses(db, skip=skip, limit=limit)
 
 
@@ -96,9 +98,12 @@ def get_nearby_addresses(
         All addresses whose geodesic distance from the reference point is
         less than or equal to ``radius_km``.
     """
-    return address_service.get_addresses_within_distance(
+    logger.info("Nearby search: lat=%s lon=%s radius_km=%s", latitude, longitude, radius_km)
+    results = address_service.get_addresses_within_distance(
         db, latitude=latitude, longitude=longitude, radius_km=radius_km
     )
+    logger.info("Nearby search returned %d result(s).", len(results))
+    return results
 
 
 @router.get("/{address_id}", response_model=AddressResponse)
@@ -115,8 +120,10 @@ def get_address(address_id: int, db: DB) -> AddressResponse:
     Raises:
         HTTPException: 404 if no address with ``address_id`` exists.
     """
+    logger.info("Fetching address id=%d", address_id)
     address = address_service.get_address(db, address_id)
     if address is None:
+        logger.warning("Address id=%d not found.", address_id)
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Address with id={address_id} not found.",
@@ -142,13 +149,15 @@ def update_address(address_id: int, body: AddressUpdate, db: DB) -> AddressRespo
     Raises:
         HTTPException: 404 if no address with ``address_id`` exists.
     """
+    logger.info("Updating address id=%d with fields: %s", address_id, body.model_dump(exclude_unset=True))
     address = address_service.update_address(db, address_id, body)
     if address is None:
+        logger.warning("Update failed — address id=%d not found.", address_id)
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Address with id={address_id} not found.",
         )
-    logger.info("Updated address id=%d", address_id)
+    logger.info("Address id=%d updated successfully.", address_id)
     return address
 
 
@@ -166,11 +175,13 @@ def delete_address(address_id: int, db: DB) -> dict[str, str]:
     Raises:
         HTTPException: 404 if no address with ``address_id`` exists.
     """
+    logger.info("Deleting address id=%d", address_id)
     deleted = address_service.delete_address(db, address_id)
     if not deleted:
+        logger.warning("Delete failed — address id=%d not found.", address_id)
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Address with id={address_id} not found.",
         )
-    logger.info("Deleted address id=%d", address_id)
+    logger.info("Address id=%d deleted successfully.", address_id)
     return {"message": f"Address {address_id} deleted successfully."}

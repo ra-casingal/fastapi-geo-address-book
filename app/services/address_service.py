@@ -18,6 +18,7 @@ Typical usage from a route handler::
         return address
 """
 
+import logging
 from typing import Optional
 
 from geopy.distance import geodesic
@@ -25,6 +26,8 @@ from sqlalchemy.orm import Session
 
 from app.models.address import Address
 from app.schemas.address import AddressCreate, AddressUpdate
+
+logger = logging.getLogger(__name__)
 
 
 def create_address(db: Session, address_in: AddressCreate) -> Address:
@@ -41,6 +44,7 @@ def create_address(db: Session, address_in: AddressCreate) -> Address:
     db.add(db_address)
     db.commit()
     db.refresh(db_address)
+    logger.info("Address id=%d persisted to database.", db_address.id)
     return db_address
 
 
@@ -96,6 +100,7 @@ def update_address(
 
     changes = address_in.model_dump(exclude_unset=True)
     if not changes:
+        logger.info("No fields to update for address id=%d; skipping commit.", address_id)
         return db_address
 
     for field, value in changes.items():
@@ -103,6 +108,7 @@ def update_address(
 
     db.commit()
     db.refresh(db_address)
+    logger.info("Address id=%d updated with fields: %s", address_id, list(changes.keys()))
     return db_address
 
 
@@ -118,10 +124,12 @@ def delete_address(db: Session, address_id: int) -> bool:
     """
     db_address = db.get(Address, address_id)
     if db_address is None:
+        logger.warning("Delete requested for non-existent address id=%d.", address_id)
         return False
 
     db.delete(db_address)
     db.commit()
+    logger.info("Address id=%d deleted from database.", address_id)
     return True
 
 
