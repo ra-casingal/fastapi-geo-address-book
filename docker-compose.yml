@@ -1,0 +1,21 @@
+services:
+  api:
+    build: .
+    ports:
+      - "8000:8000"
+
+    # Load all settings from .env, then override DATABASE_URL so SQLite
+    # writes to the persistent volume rather than the container filesystem.
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: "sqlite:////app/data/address_book.db"
+
+    # Mount a local ./data directory at /app/data inside the container.
+    # The SQLite file written here persists across container restarts and
+    # rebuilds because it lives on the host, not inside the image layer.
+    volumes:
+      - ./data:/app/data
+
+    # Restart the container automatically if it crashes (useful during demos).
+    restart: unless-stopped

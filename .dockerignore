@@ -1,0 +1,28 @@
+# Virtual environment — never copy into the image
+venv/
+.venv/
+
+# Secrets — injected at runtime via env_file / environment
+.env
+
+# Local SQLite database file
+*.db
+*.sqlite
+*.sqlite3
+
+# Test artifacts
+.pytest_cache/
+
+# Python byte-code cache
+__pycache__/
+*.pyc
+*.pyo
+
+# Version control
+.git/
+.gitignore
+
+# Documentation / editor files
+README.md
+.vscode/
+.idea/

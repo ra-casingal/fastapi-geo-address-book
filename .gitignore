@@ -22,6 +22,9 @@ dist/
 *.sqlite
 *.sqlite3
 
+# Docker SQLite data volume
+data/
+
 # Environment variables
 .env
 
