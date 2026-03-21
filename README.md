@@ -58,6 +58,25 @@ fastapi-geo-address-book/
 
 ---
 
+## Requirements
+
+- **Python 3.10 or higher** — the project has been developed and tested on Python 3.10+
+- **pip** (or **pip3**) — required to install dependencies
+- A virtual environment is strongly recommended to isolate packages
+- All dependencies are listed in `requirements.txt`
+
+### Dependency compatibility
+
+| Package       | Version in use | Notes                                    |
+|---------------|----------------|------------------------------------------|
+| FastAPI       | 0.135.x        | Compatible with current release          |
+| SQLAlchemy    | 2.0.x          | Uses SQLAlchemy 2.x ORM style            |
+| Pydantic      | v2 (2.x)       | Uses Pydantic v2 schemas and validation  |
+| geopy         | 2.4.x          | Geodesic distance (WGS-84 ellipsoid)     |
+| pytest        | 9.x            | Automated test suite                     |
+
+---
+
 ## Local Setup
 
 ### 1. Clone the repository
@@ -69,8 +88,10 @@ cd fastapi-geo-address-book
 
 ### 2. Create and activate a virtual environment
 
+> **Python version:** Python 3.10 or higher is required. On Windows the `py` launcher selects the version automatically; on macOS/Linux verify with `python3 --version` before proceeding.
+
 ```bash
-# Windows
+# Windows (Python 3.10+)
 py -3 -m venv venv
 .\venv\Scripts\Activate.ps1      # PowerShell
 # .\venv\Scripts\activate.bat    # Command Prompt
